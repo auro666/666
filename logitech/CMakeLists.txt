@@ -29,5 +29,4 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(leftcam src/left_camera.cpp)
-rosbuild_add_executable(rightcam src/right_camera.cpp)
+rosbuild_add_executable(camera src/camera.cpp)

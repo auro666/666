@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 
 <launch>
-  <node pkg="logitech" type="leftcam" name="leftcam" respawn="true" />
-  <node pkg="logitech" type="rightcam" name="rightcam" respawn="true" />
+  <node pkg="logitech" type="camera" name="camera" respawn="true" />
 </launch>
   
