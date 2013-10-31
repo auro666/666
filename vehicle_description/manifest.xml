@@ -1,0 +1,20 @@
+<package>
+  <description brief="vehicle_description">
+
+     vehicle_description
+
+  </description>
+  <author>AuRo666</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/vehicle_description</url>
+  <depend package="std_msgs"/>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+  
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib"/>
+  </export>
+</package>
+
+
