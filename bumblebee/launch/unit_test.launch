@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node pkg="bumblebee" type="stereopsis" name="stereopsis" output="screen" respawn="true" />
+  <node pkg="bumblebee" type="publisher" name="publisher" output="screen" respawn="true" />
+    <node pkg="bumblebee" type="tester" name="tester" output="screen" />
+</launch>
+  

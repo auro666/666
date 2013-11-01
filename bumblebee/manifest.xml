@@ -1,0 +1,20 @@
+<package>
+  <description brief="bumblebee">
+
+     bumblebee
+
+  </description>
+  <author>AuRo666</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/bumblebee</url>
+  <depend package="roscpp"/>
+  <depend package="rospy"/>
+  <depend package="sensor_msgs"/>
+  <depend package="opencv2"/>
+  <depend package="image_transport"/> 
+  <depend package="cv_bridge"/>
+  <depend package="sensor_msgs"/>
+</package>
+
+
