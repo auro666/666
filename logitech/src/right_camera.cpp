@@ -6,14 +6,14 @@
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "right_camera_pub");
+	ros::init(argc, argv, "right_camera");
 	ros::NodeHandle nh;
 	image_transport::ImageTransport it(nh);
 	image_transport::Publisher pub = it.advertise("logitech/right/image", 10);
 	
 	cv::VideoCapture cap(1); 
     if(!cap.isOpened()) {
-        throw "Error when reading from right camera";
+        ROS_ERROR("[right_camera]: Error when reading from right camera");
 	}
 	
     cv::namedWindow("Left Camera", 1);

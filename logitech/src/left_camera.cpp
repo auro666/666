@@ -4,16 +4,16 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 
-int main(int argc, char** argv)
-{
-	ros::init(argc, argv, "left_camera_pub");
+int main(int argc, char** argv) {
+	ros::init(argc, argv, "left_camera");
 	ros::NodeHandle nh;
 	image_transport::ImageTransport it(nh);
 	image_transport::Publisher pub = it.advertise("logitech/left/image", 10);
 	
 	cv::VideoCapture cap(0); 
     if(!cap.isOpened()) {
-        throw "Error when reading from left camera";
+        ROS_ERROR("[left_camera]: Error when reading from left camera");
+        return 0;
 	}
 	
     cv::namedWindow("Left Camera", 1);

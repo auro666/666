@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <sdf version="1.4">
   <model name="car">
-
+<pose>0 0 0 0 0 0.75</pose>
 <!----------------------------------------------------------------------------------- Chassis ------------->
     <link name="chassis">
       <pose>0 0 0.3 0 0 0</pose>
@@ -318,14 +318,6 @@
       <set_vel>1</set_vel>
       <set_theta>0.8</set_theta>
       <lateral_shift>2</lateral_shift>
-    </plugin>
-
-	<plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
-        <alwaysOn>true</alwaysOn>       
-        <bodyName>chassis</bodyName>
-        <topicName>imu_data</topicName>
-        <gaussianNoise>0.0</gaussianNoise>
-        <updateRate>10.0</updateRate> 
     </plugin>
   </model>
 </sdf>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-  <node pkg="controller" type="controller" name="controller"/>
-  <node pkg="controller" type="tester" name="tester" output="screen"/>
+  <node pkg="controller" type="controller" name="controller" output="screen"/>
+  <node pkg="controller" type="tester" name="tester" />
 </launch>
   

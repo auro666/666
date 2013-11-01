@@ -134,7 +134,7 @@ namespace gazebo {
 				this->joint[BACK_RIGHT_VEL]   = this->model_->GetJoint("back_right_joint");
 				this->refjoint_1   = this->model_->GetJoint("ref_1_joint");
 				this->refjoint_2   = this->model_->GetJoint("ref_2_joint");
-
+				dummy    = this->refjoint_1->GetAnchor(1);
 
 				this->last_update_time_ = this->model_->GetWorld()->GetSimTime();
 				this->update_connection_ = gazebo::event::Events::ConnectWorldUpdateBegin(boost::bind(&JointControl::UpdateCMD, this));
@@ -149,6 +149,7 @@ namespace gazebo {
 				tanTheta = tan(cmd_theta);
 				targets[FRONT_LEFT_YAW]  = atan2(2 * vehicleLength * tanTheta, 2 * vehicleLength - wheelBase * tanTheta);
 				targets[FRONT_RIGHT_YAW] = atan2(2 * vehicleLength * tanTheta, 2 * vehicleLength + wheelBase * tanTheta);
+				ROS_INFO("(%lf , %lf)", targets[FRONT_LEFT_YAW]*180/PI, targets[FRONT_RIGHT_YAW]*180/PI);
 				
 				gazebo::common::Time current_time = this->model_->GetWorld()->GetSimTime();
 				for (this->temp = 0; this->temp < 4; this->temp++) {
@@ -166,18 +167,17 @@ namespace gazebo {
 				}
 				this->last_update_time_ = current_time;
 				
-				tanTheta = this->joint[FRONT_LEFT_YAW]->GetAngle(0).Radian();
+				tanTheta = tan(this->joint[FRONT_LEFT_YAW]->GetAngle(0).Radian());
 				cur_theta = atan(2 * vehicleLength * tanTheta / (2 * vehicleLength + wheelBase * tanTheta));
 				cur_vel = this->joint[BACK_LEFT_VEL]->GetVelocity(0) * wheelRadius;
 				
 				location = this->refjoint_1->GetAnchor(1);
-				dummy    = this->refjoint_2->GetAnchor(1);
 				
 				getPose(this->model_->GetWorldPose());
 				
-				_pose.position.x = location.x;
-				_pose.position.y = location.y;
-				_pose.position.z = location.z;
+				_pose.position.x = bot_x;
+				_pose.position.y = bot_y;
+				_pose.position.z = bot_z;
 				
 				_pose.orientation.x = qx;
 				_pose.orientation.y = qy;
