@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 
 <launch>
-  <node pkg="controller" type="controller" name="controller" output="screen"/>
-  <node pkg="controller" type="tester" name="tester" />
+  <node pkg="controller" type="controller" name="controller"/>
+  <node pkg="controller" type="tester" name="tester" output="screen">
+	  <param name="debug_mode" type="int" value="0"/>
+	  </node>
 </launch>
   

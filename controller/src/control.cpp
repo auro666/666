@@ -3,32 +3,14 @@
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/Path.h>
 #include <vehicle_description/State.h>
-
+#include <std_msgs/Float64.h>
+#include <opencv2/opencv.hpp>
 #define PI 3.141
-
-
-
-
-
-
-
-//class Vector {
-	//double x, y, z;
-	
-	//Vector crossProduct(Vector another) {
-		//Vector l;
-		//l.x = y*l.z - z*l.y;
-		//l.y = z*l.x - x*l.z;
-		//l.z = x*l.y - y*l.x;
-		//return l;
-	//}
-//};
-
-int path_ended = 0;
 
 geometry_msgs::Pose pose;
 vehicle_description::State state;
 nav_msgs::Path path;
+int path_ended = 0;
 
 void poseUpdate(const geometry_msgs::Pose::ConstPtr& _pose) {
 	pose.position = _pose->position;
@@ -66,12 +48,15 @@ double yawDifference(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2) {
 	return yaw1 - yaw2;
 }
 
+double abs(double x) {
+	return x > 0 ? x : -x;
+}
+
 void calculateParams(double &cte, double& psi) {
-	double distance = displacement(pose, path.poses[0].pose);
-	double min_distance = distance;
-	double closest = 0;
-	for (int i = 1; i < path.poses.size(); i++) {
-		distance = displacement(pose, path.poses[i].pose);
+	double min_distance = displacement(pose, path.poses[0].pose);
+	int closest = 0;
+	for (int i = 0; i < path.poses.size(); i++) {
+		double distance = displacement(pose, path.poses[i].pose);
 		if (distance < min_distance) {
 			min_distance = distance;
 			closest = i;
@@ -82,27 +67,21 @@ void calculateParams(double &cte, double& psi) {
 		path_ended = 1;
 	}
 	
-	double roll, pitch, yaw;
-	tf::Quaternion quat(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
-	tf::Matrix3x3 matrix(quat);
-	matrix.getRPY(roll, pitch, yaw);
+	psi = tf::getYaw(pose.orientation) - tf::getYaw(path.poses[closest].pose.orientation);
 	
-	double rollPath, pitchPath, yawPath;
-	tf::Quaternion quatPath(path.poses[closest].pose.orientation.x, 
-						path.poses[closest].pose.orientation.y, 
-						path.poses[closest].pose.orientation.z, 
-						path.poses[closest].pose.orientation.w);
-	tf::Matrix3x3 matrixPath(quatPath);
-	matrixPath.getRPY(rollPath, pitchPath, yawPath);
+	tf::Vector3 A(path.poses[closest].pose.position.x, path.poses[closest].pose.position.y, 0);
+	tf::Vector3 B(pose.position.x, pose.position.y, 0);
+	double yaw = tf::getYaw(path.poses[closest].pose.orientation);
+	ROS_DEBUG("Closest: (%lf, %lf), PATH YAW: %lf, POSE YAW: %lf, POSN: (%lf, %lf)", path.poses[closest].pose.position.x, path.poses[closest].pose.position.y, yaw, tf::getYaw(pose.orientation), pose.position.x, pose.position.y);
 	
-	psi = yawDifference(pose, path.poses[closest].pose);
-	//cte = min_distance * sin(psi); 
-	//psi = state.steer_angle + yaw - yawPath;
+	tf::Vector3 AC_cap(cos(yaw), sin(yaw), 0);
+	tf::Vector3 AB = B - A;
+	tf::Vector3 AC = (AB.dot(AC_cap)) * AC_cap;
+	tf::Vector3 X = AB - AC; // Ulta
+	tf::Vector3 Z(0, 0, 1);
 	
-	cte = min_distance*sin(acos(((pose.position.x - path.poses[closest].pose.position.x)*cos(yaw) + (pose.position.y - path.poses[closest].pose.position.y)*sin(yaw))/min_distance));
-	if (cos(yawPath) * (pose.position.y - path.poses[closest].pose.position.y) - sin(yawPath) * (pose.position.x - path.poses[closest].pose.position.x) < 0) {
-		cte *= -1;
-	}
+	double sign = (X.cross(AC)).dot(Z) < 0 ? -1 : 1;
+	cte = sign * X.length();
 }
 
 void calculateDefaultParams(double &cte, double& psi) {
@@ -129,30 +108,29 @@ int main(int argc, char* argv[]) {
 	ros::Subscriber path_sub = n.subscribe("local_planner/path", 2, pathUpdate);
 	
 	ros::Publisher state_pub = n.advertise<vehicle_description::State>("controller/state_command", 20);
+	ros::Publisher cte_pub = n.advertise<std_msgs::Float64>("controller/cross_track_error", 20);
 	
 	ros::Rate loop_rate(20);
 	while (ros::ok()) { 
 		vehicle_description::State cmd_state_msg;
+		std_msgs::Float64 cte_msg;
 		double cmd_steer_angle = 0;
+		double cte = 0, psi, gain = .2;
 		
 		if (path.poses.size() == 0 || path_ended) {			
 			cmd_state_msg.rear_wheel_speed = 0;
 			cmd_state_msg.steer_angle = 0;
-			ROS_INFO("The shitty path ended, the control is fucked now!");
 		} else {		
-			double cte, psi, gain = .35;
 			calculateParams(cte, psi);
-			//calculateDefaultParams(cte, psi);
-			/// Something wrong with the CTE calculation
 			cmd_steer_angle = psi + atan2(gain * cte, state.rear_wheel_speed);
-			ROS_INFO("PSI: %lf, CTE: %lf, CMD: %lf", psi, cte, cmd_steer_angle);
-			
 			cmd_state_msg.rear_wheel_speed = 1;
 			cmd_state_msg.steer_angle = cmd_steer_angle; // Positive -> Clockwise
+			cte_msg.data = cte;
+			ROS_DEBUG("[controller]: PSI: %lf, CTE: %lf, CMD: %lf", psi, cte, cmd_steer_angle);
 		}
 		
-		ROS_INFO("CMD: %lf", cmd_steer_angle);
 		state_pub.publish(cmd_state_msg);
+		cte_pub.publish(cte_msg);
 		
 		ros::spinOnce();
 		loop_rate.sleep();

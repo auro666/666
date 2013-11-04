@@ -24,6 +24,20 @@
 #define BACK_LEFT_VEL 2
 #define BACK_RIGHT_VEL 3
 
+char NORMAL[]= "\033[0m";
+char BLACK[]= "\033[0;30m";
+char RED[]= "\033[0;31m";
+char GREEN[]= "\033[0;32m";
+char BROWN[]= "\033[0;33m";
+char BLUE[]= "\033[0;34m";
+char MAGENTA[]= "\033[0;35m";
+char CYAN[]= "\033[0;36m";
+char LIGHTGRAY[]= "\033[0;37m";
+char YELLOW[]= "\033[0;33m";
+char WHITE[]= "\033[37;01m";
+
+
+
 // Vehicle Parameters
 #define wheelRadius 0.3
 #define wheelBase 1.2
@@ -47,13 +61,14 @@ void init() {
 	}
 	
 	cmd_theta = 0;
-	cmd_vel = 0;
+	cmd_vel = 1;
 	cur_theta = cur_vel = 0;
 }
 
 void commandState(const vehicle_description::State::ConstPtr& msg) {
 	cmd_theta = msg->steer_angle;
 	cmd_vel = msg->rear_wheel_speed;
+	ROS_DEBUG("%sTheta: %lf...........Vel: %lf%s",BLUE,cmd_theta,cmd_vel,NORMAL);
 }
 
 int getPose(const gazebo::math::Pose data) {
@@ -93,9 +108,12 @@ namespace gazebo {
 			
 			geometry_msgs::Pose _pose;
 			vehicle_description::State _state;
-			
+				int flag;
+				double initx,inity,initz;
 		public: 
 			void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
+				flag=0;
+				initx=inity=initz=0;
 				init();
 				char *argv[] = {"TEST"};
 				int argc = 1;
@@ -149,7 +167,7 @@ namespace gazebo {
 				tanTheta = tan(cmd_theta);
 				targets[FRONT_LEFT_YAW]  = atan2(2 * vehicleLength * tanTheta, 2 * vehicleLength - wheelBase * tanTheta);
 				targets[FRONT_RIGHT_YAW] = atan2(2 * vehicleLength * tanTheta, 2 * vehicleLength + wheelBase * tanTheta);
-				ROS_INFO("(%lf , %lf)", targets[FRONT_LEFT_YAW]*180/PI, targets[FRONT_RIGHT_YAW]*180/PI);
+				ROS_DEBUG("(%lf , %lf)", targets[FRONT_LEFT_YAW]*180/PI, targets[FRONT_RIGHT_YAW]*180/PI);
 				
 				gazebo::common::Time current_time = this->model_->GetWorld()->GetSimTime();
 				for (this->temp = 0; this->temp < 4; this->temp++) {
@@ -175,9 +193,17 @@ namespace gazebo {
 				
 				getPose(this->model_->GetWorldPose());
 				
-				_pose.position.x = bot_x;
-				_pose.position.y = bot_y;
-				_pose.position.z = bot_z;
+				
+				if(flag==0){
+					initx=bot_x;
+					inity=bot_y;
+					initz=bot_z;
+					flag=1;
+				}
+				
+				_pose.position.x = bot_x-initx;
+				_pose.position.y = bot_y-inity;
+				_pose.position.z = bot_z-initz;
 				
 				_pose.orientation.x = qx;
 				_pose.orientation.y = qy;
