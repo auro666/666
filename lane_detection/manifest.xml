@@ -1,0 +1,19 @@
+<package>
+  <description brief="lane_detection">
+
+     lane_detection
+
+  </description>
+  <author>AuRo666</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/lane_detection</url>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+  <depend package="image_transport"/> 
+  <depend package="cv_bridge"/>
+  <depend package="nav_msgs"/>
+  
+</package>
+
+
