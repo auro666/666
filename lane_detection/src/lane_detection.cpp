@@ -7,29 +7,118 @@
 
 #define PI 3.141
 
-calculateMidline(cvMat::houghImg, std::vector<cv:Vec4i> lines) {
-	cv::Vec4i line;
-	float m, cos, sin;
-	float sumx=0,sumy=0,midx,midy,midang,sumang=0,ang,slope;
-	for( int i = 0; i < lines->total; i++ )
+float line_eq(float a, float b, int y){
+  return a*y+b;
+}
+
+void calculateMidline(cv::Mat houghImg, std::vector<cv::Vec4i> lines) {
+  cv::Vec4i line;
+  float m, cos, sin;
+  float sumx=0,sumy=0,midx,midy,midang,sumang=0,ang,slope;
+  for( int i = 0; i < lines.size(); i++ )
+  {
+    line = lines[i];
+    sumx+=(line[0] + line[2])/2;
+    sumy+=(line[1] + line[3])/2;
+    slope=((float)(line[3] - line[1]))/((float)(line[2] - line[0]));
+    ang = atan(slope)*180/CV_PI;
+    if(ang<0.0f)
+      ang+=180;
+    sumang+=ang;
+  }
+  midx=sumx/lines.size();
+  midy=sumy/lines.size();
+  midang=sumang/lines.size();
+  m=tan(midang*CV_PI/180);
+  cos=1.0/sqrt(1+m*m);
+  sin=fabs(cos*m);
+  if(m<0.0f)
+    cos*=-1;
+  float a, b;
+  //mid line is of form x=ay+b
+  a=1.0/m;
+  b=midx-((float)midy)/m;
+
+  float cnt1=0,cnt2=0;
+  float sumx1=0,sumy1=0,sumang1=0,midx1,midy1,midang1;
+  float sumx2=0,sumy2=0,sumang2=0,midx2,midy2,midang2;
+
+  float xm,ym;
+  for( int i = 0; i < lines.size(); i++ )
+  {
+    line = lines[i];
+    xm=((float)(line[0] + line[2]))/2;
+    ym=((float)(line[1] + line[3]))/2;
+    slope=((float)(line[1] - line[3]))/((float)(line[0] - line[2]));
+    ang=atan(slope)*180/CV_PI;
+    if(ang<0.0f)
+      ang+=180;
+    if(line_eq(a, b, ym)>(float)xm)
     {
-        line = lines[i];
-        sumx+=(line[0] + line[2])/2;
-        sumy+=(line[1] + line[3])/2;
-        slope=((float)(line[3] - line[1]))/((float)(line[2] - line[0]));
-        ang = atan(slope)*180/CV_PI;
-        if(ang<0.0f)
-            ang+=180;
-        sumang+=ang;
+      sumx1+=xm;
+      sumy1+=ym;
+      sumang1+=ang;
+      cnt1++;
     }
-    midx=sumx/lines->total;
-    midy=sumy/lines->total;
-    midang=sumang/lines->total;
+    else
+    {
+      sumx2+=xm;
+      sumy2+=ym;
+      sumang2+=ang;
+      cnt2++;
+    }
+  }
+
+  midx1=sumx1/cnt1;
+  midy1=sumy1/cnt1;
+  midang1=sumang1/cnt1;
+  cv::Point c, d;
+  int thickness = 2;
+  int linetype = 8;
+  {
+    m=tan(midang1*CV_PI/180);
+    cos=1.0/sqrt(1+m*m);
+    sin=fabs(cos*m);
+    if(m<0.0f)
+      cos*=-1;
+    c.x=int(midx1+100*cos);
+    c.y=int(midy1+100*sin);
+    d.x=int(midx1-100*cos);
+    d.y=int(midy1-100*sin);
+    cv::line(houghImg, c, d, cv::Scalar(255,255,255), thickness, linetype);
+  }
+  midx2=sumx2/cnt2;
+  midy2=sumy2/cnt2;
+  midang2=sumang2/cnt2;
+  {
+    m=tan(midang2*CV_PI/180);
+    cos=1.0/sqrt(1+m*m);
+    sin=fabs(cos*m);
+    if(m<0.0f)
+      cos*=-1;
+
+    c.x=int(midx2+100*cos);
+    c.y=int(midy2+100*sin);
+    d.x=int(midx2-100*cos);
+    d.y=int(midy2-100*sin);
+    cv::line(houghImg, c, d, cv::Scalar(255,255,255), thickness, linetype);
+  }
+  midx=(midx1+midx2)/2;
+  midy=(midy1+midy2)/2;
+  midang=(midang1+midang2)/2;
+  {
     m=tan(midang*CV_PI/180);
     cos=1.0/sqrt(1+m*m);
     sin=fabs(cos*m);
     if(m<0.0f)
-        cos*=-1;
+      cos*=-1;
+    c.x=int(midx+100*cos);
+    c.y=int(midy+100*sin);
+    d.x=int(midx-100*cos);
+    d.y=int(midy-100*sin);
+    cv::line(houghImg, c, d, cvScalar(0,0,255), thickness, linetype);
+  }
+
 }
 
 void detectLanes(const sensor_msgs::ImageConstPtr& msg) {
