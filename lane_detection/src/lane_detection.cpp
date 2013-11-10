@@ -132,9 +132,7 @@ void detectLanes(const sensor_msgs::ImageConstPtr& msg) {
 
     //Subscribed image in source
     cv::Mat source = cv_ptr->image;
-    imshow("Source", source);
-    cv::waitKey(10);
-
+    
     //Apply Bilateral Filter to smooth keeping edges intact
     cv::Mat filtered(source.rows, source.cols, CV_8UC3);
     cv::bilateralFilter(source, filtered, 0, 21, 3);

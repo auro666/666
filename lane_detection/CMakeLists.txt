@@ -30,3 +30,4 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_executable(lane_detection src/lane_detection.cpp)
+rosbuild_add_executable(callback src/callback.cpp)
