@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node pkg="lane_detection" type="lane_detection" name="lane_detection" respawn="true" />
+    <node pkg="logitech" type="left_camera" name="left_camera" />
+  <node pkg="logitech" type="right_camera" name="right_camera" />
+</launch>
+  
