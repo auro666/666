@@ -52,11 +52,23 @@ double abs(double x) {
 	return x > 0 ? x : -x;
 }
 
+geometry_msgs::Pose obtainSteerPoint(geometry_msgs::Pose pose) {
+	geometry_msgs::Pose steer_point = pose;
+	double distance = 0.6;
+	double theta = tf::getYaw(pose.orientation);
+	steer_point.position.x += distance * cos(theta);
+	steer_point.position.y += distance * sin(theta);
+	
+	return steer_point;
+}
+
 void calculateParams(double &cte, double& psi) {
-	double min_distance = displacement(pose, path.poses[0].pose);
+	geometry_msgs::Pose steer_point = obtainSteerPoint(pose);
+	
+	double min_distance = displacement(steer_point, path.poses[0].pose);
 	int closest = 0;
 	for (int i = 0; i < path.poses.size(); i++) {
-		double distance = displacement(pose, path.poses[i].pose);
+		double distance = displacement(steer_point, path.poses[i].pose);
 		if (distance < min_distance) {
 			min_distance = distance;
 			closest = i;
@@ -67,12 +79,18 @@ void calculateParams(double &cte, double& psi) {
 		path_ended = 1;
 	}
 	
-	psi = tf::getYaw(pose.orientation) - tf::getYaw(path.poses[closest].pose.orientation);
+	psi = tf::getYaw(steer_point.orientation) - tf::getYaw(path.poses[closest].pose.orientation);
 	
 	tf::Vector3 A(path.poses[closest].pose.position.x, path.poses[closest].pose.position.y, 0);
-	tf::Vector3 B(pose.position.x, pose.position.y, 0);
+	tf::Vector3 B(steer_point.position.x, steer_point.position.y, 0);
 	double yaw = tf::getYaw(path.poses[closest].pose.orientation);
-	ROS_DEBUG("Closest: (%lf, %lf), PATH YAW: %lf, POSE YAW: %lf, POSN: (%lf, %lf)", path.poses[closest].pose.position.x, path.poses[closest].pose.position.y, yaw, tf::getYaw(pose.orientation), pose.position.x, pose.position.y);
+	ROS_DEBUG("Closest Path Pose: (%lf, %lf), Path Yaw: %lf, Steer Point: (%lf, %lf), Steer Point Yaw: %lf", 
+				path.poses[closest].pose.position.x, 
+				path.poses[closest].pose.position.y, 
+				yaw, 
+				steer_point.position.x, 
+				steer_point.position.y,
+				tf::getYaw(steer_point.orientation));
 	
 	tf::Vector3 AC_cap(cos(yaw), sin(yaw), 0);
 	tf::Vector3 AB = B - A;
