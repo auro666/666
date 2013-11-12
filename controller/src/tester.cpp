@@ -74,10 +74,12 @@ void plotPath() {
 }
 
 void selectPath(nav_msgs::Path& path_msg) {
-	int path_type = 1;
+	int path_type = 2;
 	switch(path_type) {
 		case 0:
-			for (int i = 0; i < 1000; i++) {
+			int n_poses = 1000;
+			path_msg.poses.resize(n_poses);
+			for (int i = 0; i < path_msg.poses.size(); i++) {
 				path_msg.poses[i].pose.position.x = i;
 				path_msg.poses[i].pose.position.y = i;
 				path_msg.poses[i].pose.position.z = 0;	
@@ -87,6 +89,8 @@ void selectPath(nav_msgs::Path& path_msg) {
 			}
 			break;
 		case 1:
+			int n_poses = 1000;
+			path_msg.poses.resize(n_poses);
 			for (int i = 0; i < path_msg.poses.size(); i++) {
 				path_msg.poses[i].pose.position.x = i;
 				path_msg.poses[i].pose.position.y = sin(i / 100.) * 100;
@@ -94,6 +98,32 @@ void selectPath(nav_msgs::Path& path_msg) {
 				path_msg.poses[i].pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, atan(cos(i / 100.)));
 				
 				target.push_back(cv::Point(10 + i, 300 - sin(i / 100.) * 100));
+			}
+			break;
+		case 2:
+			std::ifstream curve_file ("../data/curve.txt");
+			if (curve_file.is_open()) {
+				std::string line;
+				std::getline(curve_file, line);
+				std::stringstream ss(line);
+				int n_poses;
+				if (ss >> n_poses) {
+					path_msg.poses.resize(n_poses);
+					for (int i = 0; i < path_msg.poses.size(); i++) {
+						std::getline(curve_file, line);
+						double x, y, theta;
+						std::stringstream ss(line);
+						ss >> x >> y >> theta;
+						
+						path_msg.poses[i].pose.position.x = x;
+						path_msg.poses[i].pose.position.y = y;
+						path_msg.poses[i].pose.position.z = 0;	
+						path_msg.poses[i].pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, theta);
+						
+						target.push_back(cv::Point(10 + x, 300 - y));
+					}
+				}
+				myfile.close();
 			}
 			break;
 		default:
@@ -134,9 +164,7 @@ int main(int argc, char **argv) {
 	setupCTEDisplay();
 	setupPathDisplay();
 	
-	int n_poses = 1000;
 	nav_msgs::Path path_msg;
-	path_msg.poses.resize(n_poses);
 	selectPath(path_msg);
 
 	ros::Rate loop_rate(100);
