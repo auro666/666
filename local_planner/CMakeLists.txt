@@ -32,6 +32,13 @@ rosbuild_add_boost_directories()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(local_planner src/local_planner.cpp)
-# add a given boost library to be linked with your target
-rosbuild_link_boost(local_planner thread system signals)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SBPL REQUIRED sbpl)
+include_directories(${SBPL_INCLUDE_DIRS})
+link_directories(${SBPL_LIBRARY_DIRS})
+
+rosbuild_add_executable(road_navigation src/road_navigation.cpp)
+rosbuild_link_boost(road_navigation thread system signals)
+
+rosbuild_add_executable(free_navigation src/free_navigation.cpp)
+target_link_libraries(free_navigation ${SBPL_LIBRARIES})
