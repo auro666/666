@@ -1,5 +1,5 @@
 geometry_msgs/Pose pose
 ---
-int8 sense_range 
-int8[] snippet
+int32 sense_range 
+uint8[] snippet
 bool valid

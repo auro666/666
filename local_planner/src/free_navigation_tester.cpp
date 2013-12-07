@@ -7,11 +7,8 @@ unsigned char *map;
 int num_cols = 4000, num_rows = 4000;
 
 bool mapServer(local_planner::MapUpdate::Request& req, local_planner::MapUpdate::Response& res) {
-    int sensing_width = 5; // Meters
-    int sensing_range = sensing_width / req.resolution;
-
-    res.sensing_range = sensing_range;
-    res.snippet = new unsigned char [(2 * sensing_range + 1) * (2 * sensing_range + 1)];
+    int sensing_range = 200;
+    res.sense_range = sensing_range;
     res.valid = false;
 
     for (int x = -sensing_range; x <= sensing_range; x++) {
@@ -20,18 +17,19 @@ bool mapServer(local_planner::MapUpdate::Request& req, local_planner::MapUpdate:
             int map_y = y + req.pose.position.y;
             if ((0 <= map_x) && (map_x < num_rows) && (0 <= map_y) && (map_y < num_cols)) {
                 int map_index = map_x + map_y * num_rows;
-                int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
-                res.snippet[snippet_index] = map[map_index];
+                res.snippet.push_back(map[map_index]);
                 res.valid = true;
             }
         }
     }
+    
+    return true;
 }
 
 void displayMap() {
     cv::Mat map_frame(num_rows, num_cols, CV_8UC1, map);
     cv::Mat display_frame;
-    cv::resize(map_frame, display_frame, 0, 1. / 8, 1. / 8, CV_INTER_AREA);
+    cv::resize(map_frame, display_frame, cv::Size(), 1. / 8, 1. / 8, CV_INTER_AREA);
     imshow("Map", display_frame);
     cv::waitKey(10);
 }

@@ -13,6 +13,8 @@ using namespace message_filters;
 #include "Make_traj.h"
 using namespace std;
 
+ros::Publisher bestpath_pub;
+
 // TODO: Select the right target trajectory among lane / GPS
 
 nav_msgs::Path decideTargetTrajectory(nav_msgs::Path::ConstPtr lane_traj) {
@@ -63,9 +65,9 @@ std::vector<nav_msgs::Path> getPaths(geometry_msgs::Pose current_pose, std::vect
     for (int i = 0; i < targets.size(); i++) {
         paths.push_back(t.drawPath(current_pose, targets[i]));
     }
-    
+
     // TODO: Prune against kinematic and dynamic constraints
-    
+
     return paths;
 }
 
@@ -87,24 +89,14 @@ void plan(const nav_msgs::Path::ConstPtr& lane_traj, const geometry_msgs::PoseWi
         best_path = paths[0];
     }
 
-    ros::NodeHandle n;
-    ros::Publisher bestpath_pub = n.advertise<nav_msgs::Path>("local_planner/path", 10);
-    ros::Rate loop_rate(100);
-    int count = 0;
-    while (ros::ok()) {
-        best_path.header.seq = count;
-        best_path.header.frame_id = count;
-        best_path.header.stamp = ros::Time::now();
-        bestpath_pub.publish(best_path);
-        ros::spinOnce();
-        loop_rate.sleep();
-        ++count;
-    }
+    best_path.header.stamp = ros::Time::now();
+    bestpath_pub.publish(best_path);
 }
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "local_planner");
     ros::NodeHandle n;
+    bestpath_pub = n.advertise<nav_msgs::Path>("local_planner/path", 10);
 
     message_filters::Subscriber<nav_msgs::Path> lane_traj_sub(n, "sensor_fusion/lanes/trajectory", 10);
     message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> localization_pose_sub(n, "localization/pose", 100);

@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
+#include <nav_msgs/Path.h>
 #include <tf/transform_datatypes.h>
 #include <local_planner/MapUpdate.h>
 #include <cstring>
@@ -9,6 +10,7 @@
 using namespace std;
 
 #include <sbpl/headers.h>
+#include <sbpl/utils/utils.h>
 
 class FreeStyle {
 private:
@@ -16,7 +18,12 @@ private:
     MDPConfig MDPCfg;
     ADPlanner* planner;
     int num_cols, num_rows;
-
+    int count;
+    
+    ros::NodeHandle n;
+    ros::Publisher path_pub;
+    ros::Subscriber state_sub;
+    
     vector<sbpl_2Dpt_t> buildPerimeter() {
         vector<sbpl_2Dpt_t> perimeter;
         sbpl_2Dpt_t point;
@@ -47,18 +54,18 @@ private:
 
         if (client.call(map_update)) {
             if (map_update.response.valid) {
-                unsigned char *snippet = map_update.response.snippet;
+                std::vector<unsigned char> snippet = map_update.response.snippet;
                 int sensing_range = map_update.response.sense_range;
                 for (int x = -sensing_range; x <= sensing_range; x++) {
                     for (int y = -sensing_range; y <= sensing_range; y++) {
                         int map_x = x + pose.position.x;
                         int map_y = y + pose.position.y;
                         if ((0 <= map_x) && (map_x < num_cols) && (0 <= map_y) && (map_y < num_rows)) {
-                            int map_index = map_x * num_cols + map_y;
-                            int snippet_index = (x + sensing_range) * (2 * sensing_range + 1) + (y + sensing_range);
+                            int map_index = map_x + map_y * num_rows;
+                            int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
 
-                            if (env.GetMapCost(map_y, map_x) != snippet[snippet_index]) {
-                                env.UpdateCost(map_y, map_x, snippet[snippet_index]);
+                            if (env.GetMapCost(map_x, map_y) != snippet[snippet_index]) {
+                                env.UpdateCost(map_x, map_y, snippet[snippet_index]);
                                 nav2dcell_t changed_cell;
                                 changed_cell.x = map_x;
                                 changed_cell.y = map_y;
@@ -76,11 +83,22 @@ private:
     }
 
     void publishPath(vector<sbpl_xy_theta_pt_t> sbpl_path) {
-
+        nav_msgs::Path path;
+        path.poses.resize(sbpl_path.size());
+        for (int i = 0; i < path.poses.size(); i++) {
+            path.poses[i].pose.position.x = sbpl_path[i].x;
+            path.poses[i].pose.position.y = sbpl_path[i].y;
+            path.poses[i].pose.orientation = tf::createQuaternionMsgFromYaw(sbpl_path[i].theta);
+        }
+        path.header.seq = count;
+        path.header.frame_id = count;
+        path.header.stamp = ros::Time::now();
+        path_pub.publish(path);
+        count++;
     }
 
 public:
-
+    
     FreeStyle(char *mprim_file) {
         //TODO: Fetch all these parameters from rosparam
 
@@ -129,7 +147,7 @@ public:
         env.SetGoalTolerance(goal_tolerance_x, goal_tolerance_y, goal_tolerance_theta);
         env.SetStart(start_x, start_y, start_theta);
 
-        if (!env.InitializeMDPCfg(MDPCfg)) {
+        if (!env.InitializeMDPCfg(&MDPCfg)) {
             throw new SBPL_Exception();
         }
 
@@ -143,9 +161,14 @@ public:
         }
         planner->set_initialsolution_eps(3.0);
         planner->set_search_mode(false);
-    }
 
-    void plan_incremental(const geometry_msgs::Pose::ConstPtr& _pose) {
+        count = 0;
+        
+        state_sub = n.subscribe("localization/pose", 2, &FreeStyle::planIncremental, this);
+        path_pub = n.advertise<nav_msgs::Path>("local_planner/path", 10);
+    }     
+    
+    void planIncremental(const geometry_msgs::Pose::ConstPtr& _pose) {
         planner->set_start(env.SetStart(
                 _pose->position.x,
                 _pose->position.y,
@@ -166,15 +189,13 @@ public:
 
         publishPath(sbpl_path);
     }
-} fs_planner;
+};
 
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "fs_planner");
-    ros::NodeHandle n;
-
-    fs_planner = FreeStyle();
-
-    ros::Subscriber state_sub = n.subscribe("localization/pose", 2, fs_planner.plan_incremental);
-
+    
+    FreeStyle fs_planner = FreeStyle("../config/pr2.mprim");
+    
+    
     return 0;
 }
