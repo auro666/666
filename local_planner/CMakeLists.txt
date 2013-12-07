@@ -19,7 +19,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 rosbuild_genmsg()
 #uncomment if you have defined services
-#rosbuild_gensrv()
+rosbuild_gensrv()
 
 # initilaize boost directory search
 rosbuild_add_boost_directories()
@@ -42,3 +42,5 @@ rosbuild_link_boost(road_navigation thread system signals)
 
 rosbuild_add_executable(free_navigation src/free_navigation.cpp)
 target_link_libraries(free_navigation ${SBPL_LIBRARIES})
+
+rosbuild_add_executable(free_navigation_tester src/free_navigation_tester.cpp)

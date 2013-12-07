@@ -1,0 +1,5 @@
+geometry_msgs/Pose pose
+---
+int8 sense_range 
+int8[] snippet
+bool valid

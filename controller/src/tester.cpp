@@ -5,6 +5,7 @@
 #include <vehicle_description/State.h>
 #include <std_msgs/Float64.h>
 #include <opencv2/opencv.hpp>
+#include <fstream>
 #define PI 3.141
 
 geometry_msgs::Pose pose;
@@ -76,7 +77,7 @@ void plotPath() {
 void selectPath(nav_msgs::Path& path_msg) {
 	int path_type = 2;
 	switch(path_type) {
-		case 0:
+		case 0: {
 			int n_poses = 1000;
 			path_msg.poses.resize(n_poses);
 			for (int i = 0; i < path_msg.poses.size(); i++) {
@@ -87,8 +88,9 @@ void selectPath(nav_msgs::Path& path_msg) {
 				
 				target.push_back(cv::Point(10 + i, 300 + i));
 			}
+    }
 			break;
-		case 1:
+		case 1: {
 			int n_poses = 1000;
 			path_msg.poses.resize(n_poses);
 			for (int i = 0; i < path_msg.poses.size(); i++) {
@@ -99,8 +101,9 @@ void selectPath(nav_msgs::Path& path_msg) {
 				
 				target.push_back(cv::Point(10 + i, 300 - sin(i / 100.) * 100));
 			}
+    }
 			break;
-		case 2:
+		case 2: {
 			std::ifstream curve_file ("../data/curve.txt");
 			if (curve_file.is_open()) {
 				std::string line;
@@ -123,8 +126,9 @@ void selectPath(nav_msgs::Path& path_msg) {
 						target.push_back(cv::Point(10 + x, 300 - y));
 					}
 				}
-				myfile.close();
+				curve_file.close();
 			}
+    }
 			break;
 		default:
 			break;
