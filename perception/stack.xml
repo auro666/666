@@ -1,0 +1,10 @@
+<stack>
+  <description brief="Perception Stack for 666">
+    Set of perception related packages viz. road detection
+  </description>
+  <author>Tanmay Patil</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://www.agvkgp.com/wiki/666/perception</url>
+  <depend stack="ros"/>
+</stack>
