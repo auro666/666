@@ -5,8 +5,15 @@
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 using namespace message_filters;
+
+#include "Make_traj.h"
+using namespace std;
+
+// TODO: Select the right target trajectory among lane / GPS
 
 nav_msgs::Path decideTargetTrajectory(nav_msgs::Path::ConstPtr lane_traj) {
     return *lane_traj;
@@ -16,31 +23,49 @@ double getDistance(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2) {
     return sqrt(pow(pose1.position.x - pose2.position.x, 2) + pow(pose1.position.y - pose2.position.y, 2));
 }
 
-std::vector<geometry_msgs::Pose> getTargets(nav_msgs::Path target_traj) {
+std::vector<geometry_msgs::Pose> getTargets(geometry_msgs::Pose current_pose, nav_msgs::Path target_traj) {
     double min_distance = 5.; // In meters, along the traj
     int index = 0;
-    for (; getDistance(target_traj.poses[index].pose, target_traj.poses[index].pose) < min_distance; index++);
+    for (; getDistance(target_traj.poses[0].pose, target_traj.poses[index].pose) < min_distance; index++);
     index--;
 
+    geometry_msgs::Pose end;
+    end.position.x = target_traj.poses[index].pose.position.x;
+    end.position.y = target_traj.poses[index].pose.position.y;
+    end.position.z = target_traj.poses[index].pose.position.z;
+    double m = atan((current_pose.position.y - end.position.y) / (current_pose.position.x - end.position.x));
+    double dist_seeds = 10;
     // Need to get laterally shifted trajectories
     std::vector<geometry_msgs::Pose> targets;
-    targets.push_back(target_traj.poses[index].pose);
+    geometry_msgs::Pose poss_target;
+    for (int i = 1; i < 40; i += 1) {
+        poss_target.position.x = end.position.x + i * dist_seeds * sin(m);
+        poss_target.position.y = end.position.y - i * dist_seeds * cos(m);
+        poss_target.position.z = end.position.z;
+        targets.push_back(poss_target);
+    }
+
+    for (int i = -1; i>-40; i -= 1) {
+        poss_target.position.x = end.position.x + i * dist_seeds * sin(m);
+        poss_target.position.y = end.position.y - i * dist_seeds * cos(m);
+        poss_target.position.z = end.position.z;
+        targets.push_back(poss_target);
+    }
 
     return targets;
 }
 
-nav_msgs::Path generateTrajectory(geometry_msgs::Pose current_pose, geometry_msgs::Pose target_pose) {
-    nav_msgs::Path path;
-    // Generate Euler Spiral with zero boundary curvatures
-    return path;
-}
-
 std::vector<nav_msgs::Path> getPaths(geometry_msgs::Pose current_pose, std::vector<geometry_msgs::Pose> targets) {
     std::vector<nav_msgs::Path> paths;
+
+    Trajectory t;
+
     for (int i = 0; i < targets.size(); i++) {
-        paths.push_back(generateTrajectory(current_pose, targets[i]));
+        paths.push_back(t.drawPath(current_pose, targets[i]));
     }
-    // Prune against kinematic and dynamic constraints
+    
+    // TODO: Prune against kinematic and dynamic constraints
+    
     return paths;
 }
 
@@ -48,7 +73,7 @@ void plan(const nav_msgs::Path::ConstPtr& lane_traj, const geometry_msgs::PoseWi
     nav_msgs::Path target_traj = decideTargetTrajectory(lane_traj);
     geometry_msgs::Pose current_pose = pose->pose.pose;
 
-    std::vector<geometry_msgs::Pose> targets = getTargets(target_traj);
+    std::vector<geometry_msgs::Pose> targets = getTargets(current_pose, target_traj);
     std::vector<nav_msgs::Path> paths = getPaths(current_pose, targets);
 
     if (paths.size() == 0) {
@@ -58,10 +83,23 @@ void plan(const nav_msgs::Path::ConstPtr& lane_traj, const geometry_msgs::PoseWi
 
     nav_msgs::Path best_path;
     for (int i = 0; i < paths.size(); i++) {
-        // Choose the best path
+        // TODO: Choose the best path
+        best_path = paths[0];
     }
 
-    // Publish the best path
+    ros::NodeHandle n;
+    ros::Publisher bestpath_pub = n.advertise<nav_msgs::Path>("local_planner/path", 10);
+    ros::Rate loop_rate(100);
+    int count = 0;
+    while (ros::ok()) {
+        best_path.header.seq = count;
+        best_path.header.frame_id = count;
+        best_path.header.stamp = ros::Time::now();
+        bestpath_pub.publish(best_path);
+        ros::spinOnce();
+        loop_rate.sleep();
+        ++count;
+    }
 }
 
 int main(int argc, char **argv) {

@@ -17,12 +17,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-rosbuild_genmsg()
+#rosbuild_genmsg()
 #uncomment if you have defined services
-rosbuild_gensrv()
-
-# initilaize boost directory search
-rosbuild_add_boost_directories()
+#rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
@@ -31,24 +28,3 @@ rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
-find_package(OpenCV REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SBPL REQUIRED sbpl)
-include_directories(${SBPL_INCLUDE_DIRS})
-link_directories(${SBPL_LIBRARY_DIRS})
-link_directories("/usr/local/lib/")
-
-rosbuild_add_executable(road_navigation src/road_navigation.cpp src/clothoid.cpp)
-rosbuild_add_executable(test_lanepub src/test.cpp)
-rosbuild_link_boost(road_navigation thread system signals)
-
-rosbuild_add_executable(free_navigation src/free_navigation.cpp)
-target_link_libraries(free_navigation ${SBPL_LIBRARIES})
-<<<<<<< HEAD
-
-rosbuild_add_executable(free_navigation_tester src/free_navigation_tester.cpp)
-=======
-target_link_libraries(free_navigation ${OpenCV_LIBS})
-target_link_libraries(road_navigation ${OpenCV_LIBS})
-target_link_libraries(test_lanepub ${OpenCV_LIBS})
->>>>>>> 25322dfcb75a63d764bc8bde7bca9bcd7c6b0632
