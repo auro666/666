@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
 <launch>
-  <node pkg="local_planner" type="free_navigation" name="free_navigation" args="../config/willow-25mm-inflated-env.cfg ../config/pr2.mprim" cwd="node" output="screen"/>
+  <node pkg="local_planner" type="free_navigation" name="free_navigation" cwd="node" output="screen"/>
 </launch>
   

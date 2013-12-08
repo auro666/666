@@ -19,11 +19,12 @@ private:
     ADPlanner* planner;
     int num_cols, num_rows;
     int count;
-    
+
     ros::NodeHandle n;
     ros::Publisher path_pub;
     ros::Subscriber state_sub;
-    
+    ros::Subscriber goal_sub;
+
     vector<sbpl_2Dpt_t> buildPerimeter() {
         vector<sbpl_2Dpt_t> perimeter;
         sbpl_2Dpt_t point;
@@ -61,7 +62,6 @@ private:
                         int map_x = x + pose.position.x;
                         int map_y = y + pose.position.y;
                         if ((0 <= map_x) && (map_x < num_cols) && (0 <= map_y) && (map_y < num_rows)) {
-                            int map_index = map_x + map_y * num_rows;
                             int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
 
                             if (env.GetMapCost(map_x, map_y) != snippet[snippet_index]) {
@@ -85,7 +85,7 @@ private:
     void publishPath(vector<sbpl_xy_theta_pt_t> sbpl_path) {
         nav_msgs::Path path;
         path.poses.resize(sbpl_path.size());
-        for (int i = 0; i < path.poses.size(); i++) {
+        for (unsigned int i = 0; i < path.poses.size(); i++) {
             path.poses[i].pose.position.x = sbpl_path[i].x;
             path.poses[i].pose.position.y = sbpl_path[i].y;
             path.poses[i].pose.orientation = tf::createQuaternionMsgFromYaw(sbpl_path[i].theta);
@@ -97,9 +97,38 @@ private:
         count++;
     }
 
+    void planIncremental(const geometry_msgs::Pose::ConstPtr& _pose) {
+        planner->set_start(env.SetStart(
+                _pose->position.x,
+                _pose->position.y,
+                tf::getYaw(_pose->orientation)));
+
+        vector<nav2dcell_t> changed_cells = scanMapForChanges(*_pose);
+        vector<int> predecessors;
+        if (changed_cells.size() != 0) {
+            env.GetPredsofChangedEdges(&changed_cells, &predecessors);
+            planner->update_preds_of_changededges(&predecessors);
+        }
+
+        vector<int> solution_IDs;
+        planner->replan(10, &solution_IDs);
+
+        vector<sbpl_xy_theta_pt_t> sbpl_path;
+        env.ConvertStateIDPathintoXYThetaPath(&solution_IDs, &sbpl_path);
+
+        publishPath(sbpl_path);
+    }
+
+    void updateGoal(const geometry_msgs::Pose::ConstPtr& _pose) {
+        planner->set_goal(env.SetGoal(
+                _pose->position.x,
+                _pose->position.y,
+                tf::getYaw(_pose->orientation)));
+    }
+
 public:
-    
-    FreeStyle(char *mprim_file) {
+
+    FreeStyle(const char *mprim_file) {
         //TODO: Fetch all these parameters from rosparam
 
         int width = 100; // Meters
@@ -125,7 +154,14 @@ public:
         num_rows = height / cell_size;
         vector<sbpl_2Dpt_t> perimeter = buildPerimeter();
         EnvNAVXYTHETALAT_InitParms params;
+        params.startx = start_x;
+        params.starty = start_y;
+        params.starttheta = start_theta;
+        params.mapdata = new unsigned char[num_cols * num_rows];
         params.numThetas = num_thetas;
+
+        env.SetEnvParameter("cost_inscribed_thresh", cost_inscribed_threshold);
+        env.SetEnvParameter("cost_possibly_circumscribed_thresh", cost_possibly_circumscribed_thresh);
 
         if (!env.InitializeEnv(
                 num_cols,
@@ -140,12 +176,8 @@ public:
             throw new SBPL_Exception();
         }
 
-        env.SetEnvParameter("cost_inscribed_thresh", cost_inscribed_threshold);
-        env.SetEnvParameter("cost_possibly_circumscribed_thresh", cost_possibly_circumscribed_thresh);
-        env.SetMap(new unsigned char[num_cols * num_rows]);
         env.SetGoal(goal_x, goal_y, goal_theta);
         env.SetGoalTolerance(goal_tolerance_x, goal_tolerance_y, goal_tolerance_theta);
-        env.SetStart(start_x, start_y, start_theta);
 
         if (!env.InitializeMDPCfg(&MDPCfg)) {
             throw new SBPL_Exception();
@@ -157,45 +189,26 @@ public:
             throw new SBPL_Exception();
         }
         if (planner->set_goal(MDPCfg.goalstateid) == 0) {
+
             throw new SBPL_Exception();
         }
         planner->set_initialsolution_eps(3.0);
         planner->set_search_mode(false);
 
         count = 0;
-        
+
         state_sub = n.subscribe("localization/pose", 2, &FreeStyle::planIncremental, this);
+        goal_sub = n.subscribe("master_planner/next_way_point", 2, &FreeStyle::updateGoal, this);
         path_pub = n.advertise<nav_msgs::Path>("local_planner/path", 10);
-    }     
-    
-    void planIncremental(const geometry_msgs::Pose::ConstPtr& _pose) {
-        planner->set_start(env.SetStart(
-                _pose->position.x,
-                _pose->position.y,
-                tf::getYaw(_pose->orientation)));
-
-        vector<nav2dcell_t> changed_cells = scanMapForChanges(*_pose);
-        vector<int> predecessors;
-        if (changed_cells.size() != 0) {
-            env.GetPredsofChangedEdges(&changed_cells, &predecessors);
-            planner->update_preds_of_changededges(&predecessors);
-        }
-
-        vector<int> solution_IDs;
-        planner->replan(10, &solution_IDs);
-
-        vector<sbpl_xy_theta_pt_t> sbpl_path;
-        env.ConvertStateIDPathintoXYThetaPath(&solution_IDs, &sbpl_path);
-
-        publishPath(sbpl_path);
     }
 };
 
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "fs_planner");
-    
+
     FreeStyle fs_planner = FreeStyle("../config/pr2.mprim");
-    
-    
+
+    ros::spin();
+
     return 0;
 }
