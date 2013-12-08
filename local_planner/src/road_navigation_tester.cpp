@@ -22,15 +22,12 @@ void selectPath(nav_msgs::Path& path_msg) {
 }
 
 void generate_pos(geometry_msgs::PoseWithCovarianceStamped& current_pos) {
-
     current_pos.pose.pose.position.x = 300;
     current_pos.pose.pose.position.y = 300;
     current_pos.pose.pose.position.z = 0;
-
 }
 
 void bestPath(const nav_msgs::Path::ConstPtr& path_msg) {
-
     cv::circle(img, cvPoint(path_msg->poses[0].pose.position.x, HEIGHT - path_msg->poses[0].pose.position.y), 5, cvScalarAll(255));
     cv::circle(img, cvPoint(path_msg->poses[path_msg->poses.size() - 1].pose.position.x, HEIGHT - path_msg->poses[path_msg->poses.size() - 1].pose.position.y), 5, cvScalarAll(255));
     cv::line(img, cvPoint(path_msg->poses[0].pose.position.x, HEIGHT - path_msg->poses[0].pose.position.y), cvPoint(path_msg->poses[path_msg->poses.size() - 1].pose.position.x, HEIGHT - path_msg->poses[path_msg->poses.size() - 1].pose.position.y), cvScalar(255));
@@ -39,8 +36,7 @@ void bestPath(const nav_msgs::Path::ConstPtr& path_msg) {
     }
 
     cv::imshow("Path Planned B)", img);
-    cvWaitKey(0);
-
+    cv::waitKey(0);
 }
 
 int main(int argc, char **argv) {
@@ -70,8 +66,6 @@ int main(int argc, char **argv) {
         loop_rate.sleep();
         ++count;
     }
-
-
 
     return 0;
 }

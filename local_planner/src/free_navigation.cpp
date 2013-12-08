@@ -189,7 +189,6 @@ public:
             throw new SBPL_Exception();
         }
         if (planner->set_goal(MDPCfg.goalstateid) == 0) {
-
             throw new SBPL_Exception();
         }
         planner->set_initialsolution_eps(3.0);

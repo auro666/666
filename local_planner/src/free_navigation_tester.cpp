@@ -6,6 +6,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <tf/transform_datatypes.h>
 
+void updateMap(int event, int x, int y, int flags, void *param);
+
 class Tester {
 private:
     geometry_msgs::Pose current_pose;
@@ -44,38 +46,6 @@ private:
         return true;
     }
 
-    void fillSquare(int x, int y, unsigned char value) {
-        int window_size = 50; // Pixels
-        for (int i = -window_size; i <= window_size; i++) {
-            for (int j = -window_size; j <= window_size; j++) {
-                if (isValidPoint(x + window_size, y + window_size)) {
-                    map[calculateIndex(x + window_size, y + window_size)] = value;
-                }
-            }
-        }
-    }
-
-    void publishNewGoal(int x, int y) {
-        geometry_msgs::Pose new_goal;
-        new_goal.position.x = x;
-        new_goal.position.y = y;
-        new_goal.orientation = tf::createQuaternionMsgFromYaw(0);
-        goal_pub.publish(new_goal);
-    }
-
-    void updateMap(int event, int x, int y) {
-        switch (event) {
-            case CV_EVENT_LBUTTONDOWN:
-                // Obstacle
-                fillSquare(x, y, 255);
-                break;
-            case CV_EVENT_RBUTTONDOWN:
-                // Goal
-                publishNewGoal(x, y);
-                break;
-        }
-    }
-
     void updateCurrentPose(const nav_msgs::Path::ConstPtr& path) {
         if (path->poses.size() > 1) {
             current_pose = path->poses[1].pose;
@@ -97,7 +67,26 @@ public:
         goal_pub = n.advertise<geometry_msgs::Pose>("master_planner/next_way_point", 1);
         path_sub = n.subscribe("local_planner/path", 2, &Tester::updateCurrentPose, this);
         cv::namedWindow("Map", 1);
-        //cv::setMouseCallback("Map", Tester::updateMap, 0);
+        cv::setMouseCallback("Map", updateMap, this);
+    }
+
+    void fillSquare(int x, int y, unsigned char value) {
+        int window_size = 50; // Pixels
+        for (int i = -window_size; i <= window_size; i++) {
+            for (int j = -window_size; j <= window_size; j++) {
+                if (isValidPoint(x + window_size, y + window_size)) {
+                    map[calculateIndex(x + window_size, y + window_size)] = value;
+                }
+            }
+        }
+    }
+
+    void publishNewGoal(int x, int y) {
+        geometry_msgs::Pose new_goal;
+        new_goal.position.x = x;
+        new_goal.position.y = y;
+        new_goal.orientation = tf::createQuaternionMsgFromYaw(0);
+        goal_pub.publish(new_goal);
     }
 
     void display() {
@@ -112,6 +101,20 @@ public:
         pose_pub.publish(current_pose);
     }
 };
+
+void updateMap(int event, int x, int y, int flags, void *param) {
+    Tester *tester = (Tester *) param;
+    switch (event) {
+        case CV_EVENT_LBUTTONDOWN:
+            // Obstacle
+            tester->fillSquare(x, y, 255);
+            break;
+        case CV_EVENT_RBUTTONDOWN:
+            // Goal
+            tester->publishNewGoal(x, y);
+            break;
+    }
+}
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "free_navigation_tester");

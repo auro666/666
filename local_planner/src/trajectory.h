@@ -6,8 +6,8 @@
  *
  * Created on 6 December, 2013, 5:21 PM
  */
-#ifndef MAKE_TRAJ_H
-#define	MAKE_TRAJ_H
+#ifndef TRAJECTORY_H
+#define	TRAJECTORY_H
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
@@ -63,7 +63,7 @@ double Trajectory::actualAtan(double theta, State a, State b) {
     } else if (theta < 0) {
         theta += 2 * PI;
     }
-    
+
     return theta;
 }
 
@@ -148,24 +148,20 @@ nav_msgs::Path Trajectory::drawPath(geometry_msgs::Pose current_pose, geometry_m
 
         curve.getTrajectory();
 
-
         std::vector<State> another_path = curve.plotPath();
         for (int j = 0; j < another_path.size(); j++) {
             path.push_back(another_path[j]);
         }
-
     }
     paths.poses.resize(path.size());
     for (int i = 0; i < path.size(); i++) {
         paths.poses[i].pose.position.x = path[i].x;
         paths.poses[i].pose.position.y = path[i].y;
         paths.poses[i].pose.position.z = path[i].theta;
-
     }
 
     return paths;
 }
 
-
-#endif	/* MAKE_TRAJ_H */
+#endif
 

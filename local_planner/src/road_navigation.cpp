@@ -10,7 +10,7 @@
 
 using namespace message_filters;
 
-#include "Make_traj.h"
+#include "trajectory.h"
 using namespace std;
 
 ros::Publisher bestpath_pub;

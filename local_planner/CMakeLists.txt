@@ -40,13 +40,10 @@ link_directories("/usr/local/lib/")
 
 rosbuild_add_executable(road_navigation src/road_navigation.cpp src/clothoid.cpp)
 rosbuild_link_boost(road_navigation thread system signals)
-target_link_libraries(road_navigation ${OpenCV_LIBS})
 
-rosbuild_add_executable(test_lanepub src/test.cpp)
-target_link_libraries(test_lanepub ${OpenCV_LIBS})
+rosbuild_add_executable(road_navigation_tester src/road_navigation_tester.cpp)
 
 rosbuild_add_executable(free_navigation src/free_navigation.cpp)
 target_link_libraries(free_navigation ${SBPL_LIBRARIES})
-target_link_libraries(free_navigation ${OpenCV_LIBS})
 
 rosbuild_add_executable(free_navigation_tester src/free_navigation_tester.cpp)
