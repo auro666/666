@@ -31,13 +31,15 @@ private:
         int sensing_range = 200;
         res.sense_range = sensing_range;
         res.valid = false;
+        res.snippet.resize(2 * sensing_range + 1);
 
         for (int x = -sensing_range; x <= sensing_range; x++) {
             for (int y = -sensing_range; y <= sensing_range; y++) {
                 int map_x = x + req.pose.position.x;
                 int map_y = y + req.pose.position.y;
+                int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
                 if (isValidPoint(map_x, map_y)) {
-                    res.snippet.push_back(map[calculateIndex(map_x, map_y)]);
+                    res.snippet[snippet_index] = map[calculateIndex(map_x, map_y)];
                     res.valid = true;
                 }
             }
@@ -48,18 +50,22 @@ private:
 
     void updateCurrentPose(const nav_msgs::Path::ConstPtr& path) {
         if (path->poses.size() > 1) {
-            current_pose = path->poses[1].pose;
+            current_pose = path->poses[path->poses.size()/50].pose;
+            ROS_INFO(
+                    "[free_navigation_tester] : Current Pose Updated : (%lf, %lf)",
+                    current_pose.position.x,
+                    current_pose.position.y);
         }
     }
 
 public:
 
     Tester() {
-        num_rows = num_cols = 4000;
+        num_rows = num_cols = 400;
         map = new unsigned char [num_cols * num_rows];
 
-        current_pose.position.x = 2000;
-        current_pose.position.y = 400;
+        current_pose.position.x = 5;
+        current_pose.position.y = 1;
         current_pose.orientation = tf::createQuaternionMsgFromYaw(0);
 
         map_service = n.advertiseService("map_service", &Tester::serveSnippets, this);
@@ -91,9 +97,15 @@ public:
 
     void display() {
         cv::Mat map_frame(num_rows, num_cols, CV_8UC1, map);
-        cv::Mat display_frame;
-        cv::resize(map_frame, display_frame, cv::Size(), 1. / 8, 1. / 8, CV_INTER_AREA);
-        cv::imshow("Map", display_frame);
+        cv::circle(
+                map_frame,
+                cv::Point(current_pose.position.x, current_pose.position.y),
+                1,
+                cv::Scalar(128, 128, 128),
+                1,
+                CV_AA,
+                0);
+        cv::imshow("Map", map_frame);
         cv::waitKey(10);
     }
 

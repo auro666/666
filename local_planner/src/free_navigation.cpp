@@ -53,31 +53,31 @@ private:
         map_update.request.pose = pose;
         vector<nav2dcell_t> changes;
 
-        if (client.call(map_update)) {
-            if (map_update.response.valid) {
-                std::vector<unsigned char> snippet = map_update.response.snippet;
-                int sensing_range = map_update.response.sense_range;
-                for (int x = -sensing_range; x <= sensing_range; x++) {
-                    for (int y = -sensing_range; y <= sensing_range; y++) {
-                        int map_x = x + pose.position.x;
-                        int map_y = y + pose.position.y;
-                        if ((0 <= map_x) && (map_x < num_cols) && (0 <= map_y) && (map_y < num_rows)) {
-                            int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
-
-                            if (env.GetMapCost(map_x, map_y) != snippet[snippet_index]) {
-                                env.UpdateCost(map_x, map_y, snippet[snippet_index]);
-                                nav2dcell_t changed_cell;
-                                changed_cell.x = map_x;
-                                changed_cell.y = map_y;
-                                changes.push_back(changed_cell);
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            ROS_WARN("[fs_planner] : Server Call Failed");
-        }
+//        if (client.call(map_update)) {
+//            if (map_update.response.valid) {
+//                std::vector<unsigned char> snippet = map_update.response.snippet;
+//                int sensing_range = map_update.response.sense_range;
+//                for (int x = -sensing_range; x <= sensing_range; x++) {
+//                    for (int y = -sensing_range; y <= sensing_range; y++) {
+//                        int map_x = x + pose.position.x;
+//                        int map_y = y + pose.position.y;
+//                        if ((0 <= map_x) && (map_x < num_cols) && (0 <= map_y) && (map_y < num_rows)) {
+//                            int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
+//
+//                            if (env.GetMapCost(map_x, map_y) != snippet[snippet_index]) {
+//                                env.UpdateCost(map_x, map_y, snippet[snippet_index]);
+//                                nav2dcell_t changed_cell;
+//                                changed_cell.x = map_x;
+//                                changed_cell.y = map_y;
+//                                changes.push_back(changed_cell);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        } else {
+//            ROS_WARN("[fs_planner] : Server Call Failed");
+//        }
 
         return changes;
     }
@@ -131,13 +131,13 @@ public:
     FreeStyle(const char *mprim_file) {
         //TODO: Fetch all these parameters from rosparam
 
-        int width = 100; // Meters
-        int height = 100; // Meters
-        double start_x = 50; // Meters
-        double start_y = 10; // Meters
+        int width = 10; // Meters
+        int height = 10; // Meters
+        double start_x = 5; // Meters
+        double start_y = 1; // Meters
         double start_theta = 0; // Radians
-        double goal_x = 50; // Meters
-        double goal_y = 90; // Meters
+        double goal_x = 5; // Meters
+        double goal_y = 9; // Meters
         double goal_theta = 0; // Radians
         double goal_tolerance_x = .001; // Meters
         double goal_tolerance_y = .001; // Meters
@@ -204,8 +204,11 @@ public:
 
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "fs_planner");
+    
+    // TODO: Create a master_planner node which would sequentially initiate all other nodes with data 
 
-    FreeStyle fs_planner = FreeStyle("../config/pr2.mprim");
+    //FreeStyle fs_planner = FreeStyle("../config/pr2.mprim");
+    FreeStyle fs_planner = FreeStyle("/home/samuel/fuerte_workspace/sandbox/666/local_planner/config/pr2.mprim");
 
     ros::spin();
 
