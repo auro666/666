@@ -11,13 +11,14 @@ void updateMap(int event, int x, int y, int flags, void *param);
 class Tester {
 private:
     geometry_msgs::Pose current_pose;
-    int num_rows, num_cols;
     unsigned char *map;
     ros::NodeHandle n;
     ros::ServiceServer map_service;
     ros::Publisher pose_pub;
     ros::Publisher goal_pub;
     ros::Subscriber path_sub;
+
+    // TODO: Implement this in a dedicated map server
 
     bool isValidPoint(int x, int y) {
         return (0 <= x) && (x < num_rows) && (0 <= y) && (y < num_cols);
@@ -28,10 +29,10 @@ private:
     }
 
     bool serveSnippets(local_planner::MapUpdate::Request& req, local_planner::MapUpdate::Response& res) {
-        int sensing_range = 200;
+        int sensing_range = 20;
         res.sense_range = sensing_range;
-        res.valid = false;
-        res.snippet.resize(2 * sensing_range + 1);
+        res.snippet.resize((2 * sensing_range + 1) * (2 * sensing_range + 1), 0);
+        res.valid_flags.resize((2 * sensing_range + 1) * (2 * sensing_range + 1), false);
 
         for (int x = -sensing_range; x <= sensing_range; x++) {
             for (int y = -sensing_range; y <= sensing_range; y++) {
@@ -40,7 +41,7 @@ private:
                 int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
                 if (isValidPoint(map_x, map_y)) {
                     res.snippet.at(snippet_index) = map[calculateIndex(map_x, map_y)];
-                    res.valid = true;
+                    res.valid_flags.at(snippet_index) = true;
                 }
             }
         }
@@ -52,7 +53,7 @@ private:
         if (path->poses.size() > 1) {
             current_pose = path->poses.at(path->poses.size() / 10).pose;
             ROS_INFO(
-                    "[free_navigation_tester] : Current Pose Updated : (%lf, %lf, %lf)",
+                    "[freeform_navigation_tester] : Current Pose Updated : (%lf, %lf, %lf)",
                     current_pose.position.x,
                     current_pose.position.y,
                     tf::getYaw(current_pose.orientation));
@@ -60,10 +61,14 @@ private:
     }
 
 public:
+    int num_rows, num_cols;
 
     Tester() {
         num_rows = num_cols = 400;
         map = new unsigned char [num_cols * num_rows];
+        for (int i = 0; i < num_cols * num_rows; i++) {
+            map[i] = 0;
+        }
 
         current_pose.position.x = 5;
         current_pose.position.y = 1;
@@ -78,11 +83,11 @@ public:
     }
 
     void fillSquare(int x, int y, unsigned char value) {
-        int window_size = 50; // Pixels
+        int window_size = 20; // Pixels
         for (int i = -window_size; i <= window_size; i++) {
             for (int j = -window_size; j <= window_size; j++) {
-                if (isValidPoint(x + window_size, y + window_size)) {
-                    map[calculateIndex(x + window_size, y + window_size)] = value;
+                if (isValidPoint(x + i, y + j)) {
+                    map[calculateIndex(x + i, y + j)] = value;
                 }
             }
         }
@@ -100,7 +105,7 @@ public:
         cv::Mat map_frame(num_rows, num_cols, CV_8UC1, map);
         cv::circle(
                 map_frame,
-                cv::Point(current_pose.position.x / 0.025, current_pose.position.y / 0.025),
+                cv::Point(current_pose.position.x / 0.025, num_rows - current_pose.position.y / 0.025),
                 1,
                 cv::Scalar(128, 128, 128),
                 1,
@@ -130,7 +135,7 @@ void updateMap(int event, int x, int y, int flags, void *param) {
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "free_navigation_tester");
+    ros::init(argc, argv, "freeform_navigation_tester");
     Tester tester = Tester();
 
     while (ros::ok()) {

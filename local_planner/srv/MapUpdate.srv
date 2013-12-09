@@ -2,4 +2,4 @@ geometry_msgs/Pose pose
 ---
 int32 sense_range 
 uint8[] snippet
-bool valid
+uint8[] valid_flags
