@@ -53,31 +53,31 @@ private:
         map_update.request.pose = pose;
         vector<nav2dcell_t> changes;
 
-//        if (client.call(map_update)) {
-//            if (map_update.response.valid) {
-//                std::vector<unsigned char> snippet = map_update.response.snippet;
-//                int sensing_range = map_update.response.sense_range;
-//                for (int x = -sensing_range; x <= sensing_range; x++) {
-//                    for (int y = -sensing_range; y <= sensing_range; y++) {
-//                        int map_x = x + pose.position.x;
-//                        int map_y = y + pose.position.y;
-//                        if ((0 <= map_x) && (map_x < num_cols) && (0 <= map_y) && (map_y < num_rows)) {
-//                            int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
-//
-//                            if (env.GetMapCost(map_x, map_y) != snippet[snippet_index]) {
-//                                env.UpdateCost(map_x, map_y, snippet[snippet_index]);
-//                                nav2dcell_t changed_cell;
-//                                changed_cell.x = map_x;
-//                                changed_cell.y = map_y;
-//                                changes.push_back(changed_cell);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        } else {
-//            ROS_WARN("[fs_planner] : Server Call Failed");
-//        }
+        //        if (client.call(map_update)) {
+        //            if (map_update.response.valid) {
+        //                std::vector<unsigned char> snippet = map_update.response.snippet;
+        //                int sensing_range = map_update.response.sense_range;
+        //                for (int x = -sensing_range; x <= sensing_range; x++) {
+        //                    for (int y = -sensing_range; y <= sensing_range; y++) {
+        //                        int map_x = x + pose.position.x;
+        //                        int map_y = y + pose.position.y;
+        //                        if ((0 <= map_x) && (map_x < num_cols) && (0 <= map_y) && (map_y < num_rows)) {
+        //                            int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
+        //
+        //                            if (env.GetMapCost(map_x, map_y) != snippet.at(snippet_index)) {
+        //                                env.UpdateCost(map_x, map_y, snippet.at(snippet_index));
+        //                                nav2dcell_t changed_cell;
+        //                                changed_cell.x = map_x;
+        //                                changed_cell.y = map_y;
+        //                                changes.push_back(changed_cell);
+        //                            }
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        } else {
+        //            ROS_WARN("[fs_planner] : Server Call Failed");
+        //        }
 
         return changes;
     }
@@ -86,9 +86,9 @@ private:
         nav_msgs::Path path;
         path.poses.resize(sbpl_path.size());
         for (unsigned int i = 0; i < path.poses.size(); i++) {
-            path.poses[i].pose.position.x = sbpl_path[i].x;
-            path.poses[i].pose.position.y = sbpl_path[i].y;
-            path.poses[i].pose.orientation = tf::createQuaternionMsgFromYaw(sbpl_path[i].theta);
+            path.poses.at(i).pose.position.x = sbpl_path.at(i).x;
+            path.poses.at(i).pose.position.y = sbpl_path.at(i).y;
+            path.poses.at(i).pose.orientation = tf::createQuaternionMsgFromYaw(sbpl_path.at(i).theta);
         }
         path.header.seq = count;
         path.header.frame_id = count;
@@ -204,7 +204,7 @@ public:
 
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "fs_planner");
-    
+
     // TODO: Create a master_planner node which would sequentially initiate all other nodes with data 
 
     //FreeStyle fs_planner = FreeStyle("../config/pr2.mprim");

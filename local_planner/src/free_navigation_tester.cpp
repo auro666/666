@@ -39,7 +39,7 @@ private:
                 int map_y = y + req.pose.position.y;
                 int snippet_index = (x + sensing_range) + (y + sensing_range) * (2 * sensing_range + 1);
                 if (isValidPoint(map_x, map_y)) {
-                    res.snippet[snippet_index] = map[calculateIndex(map_x, map_y)];
+                    res.snippet.at(snippet_index) = map[calculateIndex(map_x, map_y)];
                     res.valid = true;
                 }
             }
@@ -50,11 +50,12 @@ private:
 
     void updateCurrentPose(const nav_msgs::Path::ConstPtr& path) {
         if (path->poses.size() > 1) {
-            current_pose = path->poses[path->poses.size()/50].pose;
+            current_pose = path->poses.at(path->poses.size() / 10).pose;
             ROS_INFO(
-                    "[free_navigation_tester] : Current Pose Updated : (%lf, %lf)",
+                    "[free_navigation_tester] : Current Pose Updated : (%lf, %lf, %lf)",
                     current_pose.position.x,
-                    current_pose.position.y);
+                    current_pose.position.y,
+                    tf::getYaw(current_pose.orientation));
         }
     }
 
@@ -72,7 +73,7 @@ public:
         pose_pub = n.advertise<geometry_msgs::Pose>("localization/pose", 100);
         goal_pub = n.advertise<geometry_msgs::Pose>("master_planner/next_way_point", 1);
         path_sub = n.subscribe("local_planner/path", 2, &Tester::updateCurrentPose, this);
-        cv::namedWindow("Map", 1);
+        cv::namedWindow("Map", 0);
         cv::setMouseCallback("Map", updateMap, this);
     }
 
@@ -99,7 +100,7 @@ public:
         cv::Mat map_frame(num_rows, num_cols, CV_8UC1, map);
         cv::circle(
                 map_frame,
-                cv::Point(current_pose.position.x, current_pose.position.y),
+                cv::Point(current_pose.position.x / 0.025, current_pose.position.y / 0.025),
                 1,
                 cv::Scalar(128, 128, 128),
                 1,
