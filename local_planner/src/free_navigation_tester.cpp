@@ -105,7 +105,7 @@ public:
         cv::Mat map_frame(num_rows, num_cols, CV_8UC1, map);
         cv::circle(
                 map_frame,
-                cv::Point(current_pose.position.x / 0.025, num_rows - current_pose.position.y / 0.025),
+                cv::Point(current_pose.position.x / 0.025, current_pose.position.y / 0.025),
                 1,
                 cv::Scalar(128, 128, 128),
                 1,

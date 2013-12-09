@@ -77,7 +77,7 @@ private:
                                 nav2dcell_t changed_cell;
                                 changed_cell.x = map_x;
                                 changed_cell.y = map_y;
-                                //changes.push_back(changed_cell);
+                                changes.push_back(changed_cell);
                             }
                         }
                     }
