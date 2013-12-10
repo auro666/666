@@ -38,7 +38,7 @@ include_directories(${SBPL_INCLUDE_DIRS})
 link_directories(${SBPL_LIBRARY_DIRS})
 link_directories("/usr/local/lib/")
 
-rosbuild_add_executable(road_navigation src/road_navigation.cpp src/clothoid.cpp)
+rosbuild_add_executable(road_navigation src/road_navigation.cpp src/clothoid.cpp src/planner.cpp)
 rosbuild_link_boost(road_navigation thread system signals)
 
 rosbuild_add_executable(road_navigation_tester src/road_navigation_tester.cpp)
