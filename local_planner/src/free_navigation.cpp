@@ -69,10 +69,10 @@ private:
                         if (valid_flags.at(snippet_index)) {
                             if (env.GetMapCost(map_x, map_y) != snippet.at(snippet_index)) {
                                 ROS_DEBUG(
-                                        "[freeform_navigation] : Old: %d New: %d", 
-                                        env.GetMapCost(map_x, map_y), 
+                                        "[freeform_navigation] : Old: %d, New: %d",
+                                        env.GetMapCost(map_x, map_y),
                                         snippet.at(snippet_index));
-                                
+
                                 env.UpdateCost(map_x, map_y, snippet.at(snippet_index));
                                 nav2dcell_t changed_cell;
                                 changed_cell.x = map_x;
@@ -137,7 +137,7 @@ private:
 
 public:
 
-    FreeStyle(const char *mprim_file) {
+    void initializeEnvironment(const char *mprim_file) {
         //TODO: Fetch all these parameters from rosparam
 
         int width = 10; // Meters
@@ -196,7 +196,9 @@ public:
         if (!env.InitializeMDPCfg(&MDPCfg)) {
             throw new SBPL_Exception();
         }
+    }
 
+    void initializePlanner() {
         planner = new ADPlanner(&env, false); // FALSE -> BACKWARD Search
 
         if (planner->set_start(MDPCfg.startstateid) == 0) {
@@ -207,7 +209,9 @@ public:
         }
         planner->set_initialsolution_eps(3.0);
         planner->set_search_mode(false);
+    }
 
+    void setupComms() {
         count = 0;
 
         state_sub = n.subscribe("localization/pose", 2, &FreeStyle::planIncremental, this);
@@ -222,7 +226,10 @@ int main(int argc, char *argv[]) {
     // TODO: Create a master_planner node which would sequentially initiate all other nodes with data 
 
     //FreeStyle fs_planner = FreeStyle("../config/pr2.mprim");
-    FreeStyle fs_planner = FreeStyle("/home/samuel/fuerte_workspace/sandbox/666/local_planner/config/pr2.mprim");
+    FreeStyle fs_planner = FreeStyle();
+    fs_planner.initializeEnvironment("/home/samuel/fuerte_workspace/sandbox/666/local_planner/config/pr2.mprim");
+    fs_planner.initializePlanner();
+    fs_planner.setupComms();
 
     ros::spin();
 

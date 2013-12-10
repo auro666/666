@@ -74,12 +74,15 @@ public:
         current_pose.position.y = 1;
         current_pose.orientation = tf::createQuaternionMsgFromYaw(0);
 
+        cv::namedWindow("Map", 0);
+        cv::setMouseCallback("Map", updateMap, this);
+    }
+    
+    void setupComms() {
         map_service = n.advertiseService("map_service", &Tester::serveSnippets, this);
         pose_pub = n.advertise<geometry_msgs::Pose>("localization/pose", 100);
         goal_pub = n.advertise<geometry_msgs::Pose>("master_planner/next_way_point", 1);
         path_sub = n.subscribe("local_planner/path", 2, &Tester::updateCurrentPose, this);
-        cv::namedWindow("Map", 0);
-        cv::setMouseCallback("Map", updateMap, this);
     }
 
     void fillSquare(int x, int y, unsigned char value) {
@@ -137,6 +140,7 @@ void updateMap(int event, int x, int y, int flags, void *param) {
 int main(int argc, char **argv) {
     ros::init(argc, argv, "freeform_navigation_tester");
     Tester tester = Tester();
+    tester.setupComms();
 
     while (ros::ok()) {
         tester.sendCurrentPose();

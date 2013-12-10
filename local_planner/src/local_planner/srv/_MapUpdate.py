@@ -135,17 +135,17 @@ import struct
 
 
 class MapUpdateResponse(genpy.Message):
-  _md5sum = "ec8728fd94962fa73ad5fb2afd57e996"
+  _md5sum = "fb8554a383c2846638732306326a7cef"
   _type = "local_planner/MapUpdateResponse"
   _has_header = False #flag to mark the presence of a Header object
-  _full_text = """int8 sense_range
-int8[] snippet
-bool valid
+  _full_text = """int32 sense_range
+uint8[] snippet
+uint8[] valid_flags
 
 
 """
-  __slots__ = ['sense_range','snippet','valid']
-  _slot_types = ['int8','int8[]','bool']
+  __slots__ = ['sense_range','snippet','valid_flags']
+  _slot_types = ['int32','uint8[]','uint8[]']
 
   def __init__(self, *args, **kwds):
     """
@@ -155,7 +155,7 @@ bool valid
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       sense_range,snippet,valid
+       sense_range,snippet,valid_flags
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -167,13 +167,13 @@ bool valid
       if self.sense_range is None:
         self.sense_range = 0
       if self.snippet is None:
-        self.snippet = []
-      if self.valid is None:
-        self.valid = False
+        self.snippet = ''
+      if self.valid_flags is None:
+        self.valid_flags = ''
     else:
       self.sense_range = 0
-      self.snippet = []
-      self.valid = False
+      self.snippet = ''
+      self.valid_flags = ''
 
   def _get_types(self):
     """
@@ -187,12 +187,21 @@ bool valid
     :param buff: buffer, ``StringIO``
     """
     try:
-      buff.write(_struct_b.pack(self.sense_range))
-      length = len(self.snippet)
-      buff.write(_struct_I.pack(length))
-      pattern = '<%sb'%length
-      buff.write(struct.pack(pattern, *self.snippet))
-      buff.write(_struct_B.pack(self.valid))
+      buff.write(_struct_i.pack(self.sense_range))
+      _x = self.snippet
+      length = len(_x)
+      # - if encoded as a list instead, serialize as bytes instead of string
+      if type(_x) in [list, tuple]:
+        buff.write(struct.pack('<I%sB'%length, length, *_x))
+      else:
+        buff.write(struct.pack('<I%ss'%length, length, _x))
+      _x = self.valid_flags
+      length = len(_x)
+      # - if encoded as a list instead, serialize as bytes instead of string
+      if type(_x) in [list, tuple]:
+        buff.write(struct.pack('<I%sB'%length, length, *_x))
+      else:
+        buff.write(struct.pack('<I%ss'%length, length, _x))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -204,19 +213,26 @@ bool valid
     try:
       end = 0
       start = end
-      end += 1
-      (self.sense_range,) = _struct_b.unpack(str[start:end])
+      end += 4
+      (self.sense_range,) = _struct_i.unpack(str[start:end])
       start = end
       end += 4
       (length,) = _struct_I.unpack(str[start:end])
-      pattern = '<%sb'%length
       start = end
-      end += struct.calcsize(pattern)
-      self.snippet = struct.unpack(pattern, str[start:end])
+      end += length
+      if python3:
+        self.snippet = str[start:end].decode('utf-8')
+      else:
+        self.snippet = str[start:end]
       start = end
-      end += 1
-      (self.valid,) = _struct_B.unpack(str[start:end])
-      self.valid = bool(self.valid)
+      end += 4
+      (length,) = _struct_I.unpack(str[start:end])
+      start = end
+      end += length
+      if python3:
+        self.valid_flags = str[start:end].decode('utf-8')
+      else:
+        self.valid_flags = str[start:end]
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -229,12 +245,21 @@ bool valid
     :param numpy: numpy python module
     """
     try:
-      buff.write(_struct_b.pack(self.sense_range))
-      length = len(self.snippet)
-      buff.write(_struct_I.pack(length))
-      pattern = '<%sb'%length
-      buff.write(self.snippet.tostring())
-      buff.write(_struct_B.pack(self.valid))
+      buff.write(_struct_i.pack(self.sense_range))
+      _x = self.snippet
+      length = len(_x)
+      # - if encoded as a list instead, serialize as bytes instead of string
+      if type(_x) in [list, tuple]:
+        buff.write(struct.pack('<I%sB'%length, length, *_x))
+      else:
+        buff.write(struct.pack('<I%ss'%length, length, _x))
+      _x = self.valid_flags
+      length = len(_x)
+      # - if encoded as a list instead, serialize as bytes instead of string
+      if type(_x) in [list, tuple]:
+        buff.write(struct.pack('<I%sB'%length, length, *_x))
+      else:
+        buff.write(struct.pack('<I%ss'%length, length, _x))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -247,28 +272,34 @@ bool valid
     try:
       end = 0
       start = end
-      end += 1
-      (self.sense_range,) = _struct_b.unpack(str[start:end])
+      end += 4
+      (self.sense_range,) = _struct_i.unpack(str[start:end])
       start = end
       end += 4
       (length,) = _struct_I.unpack(str[start:end])
-      pattern = '<%sb'%length
       start = end
-      end += struct.calcsize(pattern)
-      self.snippet = numpy.frombuffer(str[start:end], dtype=numpy.int8, count=length)
+      end += length
+      if python3:
+        self.snippet = str[start:end].decode('utf-8')
+      else:
+        self.snippet = str[start:end]
       start = end
-      end += 1
-      (self.valid,) = _struct_B.unpack(str[start:end])
-      self.valid = bool(self.valid)
+      end += 4
+      (length,) = _struct_I.unpack(str[start:end])
+      start = end
+      end += length
+      if python3:
+        self.valid_flags = str[start:end].decode('utf-8')
+      else:
+        self.valid_flags = str[start:end]
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
-_struct_B = struct.Struct("<B")
-_struct_b = struct.Struct("<b")
+_struct_i = struct.Struct("<i")
 class MapUpdate(object):
   _type          = 'local_planner/MapUpdate'
-  _md5sum = '9a700f7316b6bcd6f12207774af69582'
+  _md5sum = '81d6983b4556a14fab75be7a8c72bd0b'
   _request_class  = MapUpdateRequest
   _response_class = MapUpdateResponse
