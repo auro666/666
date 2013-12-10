@@ -24,6 +24,8 @@ rosbuild_gensrv()
 # initilaize boost directory search
 rosbuild_add_boost_directories()
 
+include_directories ("${PROJECT_SOURCE_DIR}/include/")
+
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -38,12 +40,12 @@ include_directories(${SBPL_INCLUDE_DIRS})
 link_directories(${SBPL_LIBRARY_DIRS})
 link_directories("/usr/local/lib/")
 
-rosbuild_add_executable(road_navigation src/road_navigation.cpp src/clothoid.cpp src/planner.cpp)
+rosbuild_add_executable(road_navigation src/road_navigation/road_navigation.cpp src/road_navigation/clothoid.cpp src/local_planner.cpp)
 rosbuild_link_boost(road_navigation thread system signals)
 
-rosbuild_add_executable(road_navigation_tester src/road_navigation_tester.cpp)
+rosbuild_add_executable(road_navigation_tester src/road_navigation/road_navigation_tester.cpp)
 
-rosbuild_add_executable(free_navigation src/free_navigation.cpp)
-target_link_libraries(free_navigation ${SBPL_LIBRARIES})
+rosbuild_add_executable(freeform_navigation src/freeform_navigation/freeform_navigation.cpp)
+target_link_libraries(freeform_navigation ${SBPL_LIBRARIES})
 
-rosbuild_add_executable(free_navigation_tester src/free_navigation_tester.cpp)
+rosbuild_add_executable(freeform_navigation_tester src/freeform_navigation/freeform_navigation_tester.cpp)

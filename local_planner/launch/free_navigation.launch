@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-
-<launch>
-  <node pkg="local_planner" type="free_navigation" name="free_navigation" cwd="node" output="screen"/>
-</launch>
-  

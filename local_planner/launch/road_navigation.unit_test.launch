@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node pkg="local_planner" type="road_navigation" name="road_navigation" output="screen"/>
+  <node pkg="local_planner" type="road_navigation_tester" name="road_navigation_tester" output="screen"/>
+</launch>
+  
